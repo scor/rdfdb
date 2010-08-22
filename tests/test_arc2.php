@@ -3,9 +3,9 @@ require_once('simpletest/autorun.php');
 require_once('../rdfdb.inc');
 require_once('../arc/ARC2.php');
 
-$rdfdb_connection_arc2 = array(
+$rdfdb_connection = array(
   'driver' => 'arc2',
-  'endpoint' => 'http://localhost/d7git3/sparql',
+  'endpoint' => 'http://localhost/arc2_endpoint.php',
   'apikey' => 'somekey',
 );
 
@@ -119,11 +119,11 @@ http://example/testClearGraph2	http://example/book2	http://ex.org/title	Fundamen
     if ($expected_count) {
       // Find out how many triples were inserted via SPARQL querying.
       $inserted1 = $this->countQuads() - $count;
-      // @todo get this bug fixed in ARC2, see 
+      // @todo get this bug fixed in ARC2, see
       $this->assertEqual($inserted1, $expected_count, "$expected_count triples were inserted according to SPARQL querying [%s]");
    }
   }
-  
+
   /**
    * Helper functio to clear a store during tests.
    */
@@ -131,7 +131,7 @@ http://example/testClearGraph2	http://example/book2	http://ex.org/title	Fundamen
     rdfdb_clear()->execute();
     $this->assertEqual(0, $this->countQuads(), 'The store has been cleared. [%s]');
   }
-  
+
   function dumpTSV() {
     $rs = rdfdb_select('?g ?s ?p ?o')->where('GRAPH ?g { ?s ?p ?o . } ')->execute();
     return $this->SparqlToTSV($rs['result']);
@@ -143,7 +143,7 @@ http://example/testClearGraph2	http://example/book2	http://ex.org/title	Fundamen
   }
 
   // Dummy function exporting SPARQL results as TSV plain text, making it easier
-  // to do RDF comparisons for unit testing purposes. 
+  // to do RDF comparisons for unit testing purposes.
   function SparqlToTSV($results) {
     $rows = $results['rows'];
     $vars = $results['variables'];
