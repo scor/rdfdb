@@ -127,6 +127,16 @@ abstract class RdfdbQuery implements RdfdbQueryAlterableInterface {
     return $prefixes;
   }
 
+  /**
+   * Generic preparation and validation for a query.
+   *
+   * @return
+   *   TRUE if the validation was successful, FALSE if not.
+   */
+  public function preExecute() {
+    // @todo
+    return TRUE;
+  }
   /* Implementations of QueryAlterableInterface. */
 
   public function addTag($tag) {
@@ -165,7 +175,7 @@ class RdfdbSelectQuery extends RdfdbQuery {
   /**
    * The variables of the SPARQL query.
    *
-   * @var array
+   * @var string
    */
   protected $vars;
 
@@ -175,6 +185,13 @@ class RdfdbSelectQuery extends RdfdbQuery {
    * @var array
    */
   protected $ggps = array();
+
+  /**
+   * The limit of the SPARQL query.
+   *
+   * @var int
+   */
+  protected $limit = 0;
 
   public function __construct($connection, $vars, array $options = array()) {
     parent::__construct($connection, $options);
@@ -188,17 +205,13 @@ class RdfdbSelectQuery extends RdfdbQuery {
     return $this;
   }
 
+  public function limit($limit, $args = array()) {
+    $this->limit = $limit;
+    return $this;
+  }
+
   /**
    * Executes the select query.
-   *
-   * @return
-   *   The last insert ID of the query, if one exists. If the query
-   *   was given multiple sets of values to insert, the return value is
-   *   undefined. If the query is flagged "delayed", then the insert ID
-   *   won't be created until later when the query actually runs so the
-   *   return value is also undefined. If no fields are specified, this
-   *   method will do nothing and return NULL. That makes it safe to use
-   *   in multi-insert loops.
    */
   public function execute() {
     // If validation fails, simply return NULL.
@@ -214,17 +227,17 @@ class RdfdbSelectQuery extends RdfdbQuery {
 
   public function toString() {
     $prologue = $this->preparePrefixes();
+    $limit = $this->limit ? ' LIMIT ' . $this->limit : '';
     if (count($this->ggps) > 1) {
       $where = '{ ' . implode(" } \n { ", $this->ggps) . ' }';
     }
     else {
       $where = $this->ggps[0];
     }
-    return $prologue . "\n" . 'SELECT ' . $this->vars . ' WHERE { ' . $where . ' } ';
+    return $prologue . "\n" . 'SELECT ' . $this->vars . ' WHERE { ' . $where . ' } ' . $limit;
   }
 
   public function preparePrefixes() {
-//  var_dump($this);
     $prefixes = '';
     if (!empty($this->queryOptions['namespaces'])) {
       foreach ($this->queryOptions['namespaces'] as $p => $ns) {
@@ -232,16 +245,6 @@ class RdfdbSelectQuery extends RdfdbQuery {
       }
     }
     return $prefixes;
-  }
-
-  /**
-   * Generic preparation and validation for an INSERT query.
-   *
-   * @return
-   *   TRUE if the validation was successful, FALSE if not.
-   */
-  public function preExecute() {
-    return TRUE;
   }
 }
 
@@ -290,9 +293,6 @@ class RdfdbInsertDataQuery extends RdfdbQuery {
     }
 
     $query = $this->toString();
-    echo 'ss';
-    //return;
-//    return $this->connection->runQuery($query, $this->queryOptions);
     return $this->connection->query($query, $this->queryOptions);
 //    return $this->toString();
   }
@@ -315,21 +315,11 @@ class RdfdbInsertDataQuery extends RdfdbQuery {
     }
     return $prefixes;
   }
-
-  /**
-   * Generic preparation and validation for an INSERT query.
-   *
-   * @return
-   *   TRUE if the validation was successful, FALSE if not.
-   */
-  public function preExecute() {
-    return TRUE;
-  }
 }
 
 
 /**
- * General class for an abstracted INSERT DATA operation.
+ * General class for an abstracted DELETE DATA operation.
  */
 class RdfdbDeleteDataQuery extends RdfdbQuery {
 
@@ -341,7 +331,7 @@ class RdfdbDeleteDataQuery extends RdfdbQuery {
   protected $graph;
 
   /**
-   * The triples to be deleteed.
+   * The triples to be deleted.
    *
    * @var string
    */
@@ -355,15 +345,6 @@ class RdfdbDeleteDataQuery extends RdfdbQuery {
 
   /**
    * Executes the delete data query.
-   *
-   * @return
-   *   The last delete ID of the query, if one exists. If the query
-   *   was given multiple sets of values to delete, the return value is
-   *   undefined. If the query is flagged "delayed", then the delete ID
-   *   won't be created until later when the query actually runs so the
-   *   return value is also undefined. If no fields are specified, this
-   *   method will do nothing and return NULL. That makes it safe to use
-   *   in multi-delete loops.
    */
   public function execute() {
     // If validation fails, simply return NULL.
@@ -393,16 +374,6 @@ class RdfdbDeleteDataQuery extends RdfdbQuery {
       }
     }
     return $prefixes;
-  }
-
-  /**
-   * Generic preparation and validation for an INSERT query.
-   *
-   * @return
-   *   TRUE if the validation was successful, FALSE if not.
-   */
-  public function preExecute() {
-    return TRUE;
   }
 }
 
@@ -455,16 +426,6 @@ class RdfdbClearQuery extends RdfdbQuery {
     else {
       return 'CLEAR GRAPH DEFAULT';
     }
-  }
-
-  /**
-   * Generic preparation and validation for an INSERT query.
-   *
-   * @return
-   *   TRUE if the validation was successful, FALSE if not.
-   */
-  public function preExecute() {
-    return TRUE;
   }
 }
 
