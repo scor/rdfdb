@@ -12,13 +12,13 @@
 /**
  * Allow the use of different database servers using the same code base.
  *
- * Drupal provides a database abstraction layer to provide developers with
- * the ability to support multiple database servers easily. The intent of
- * this layer is to preserve the syntax and power of SPARQL 1.1 as much as possible,
- * but also allow developers a way to leverage more complex functionality in
- * a unified way. It also provides a structured interface for dynamically
- * constructing queries when appropriate, and enforcing security checks and
- * similar good practices.
+ * This library provides an RDF store abstraction layer to provide developers
+ * with the ability to support multiple database servers easily. The intent of
+ * this layer is to preserve the syntax and power of SPARQL 1.1 as much as
+ * possible, but also allow developers a way to leverage more complex
+ * functionality in a unified way. It also provides a structured interface for
+ * dynamically constructing queries when appropriate, and enforcing security
+ * checks and similar good practices.
  */
 
 require_once realpath(dirname(__FILE__)) . '/rdfdb.query.inc';
@@ -27,12 +27,8 @@ require_once realpath(dirname(__FILE__)) . '/rdfdb.query.inc';
 /**
  * Base RDF Database API class.
  *
- * This class provides a Drupal-specific extension of the PDO database
- * abstraction class in PHP. Every database driver implementation must provide a
- * concrete implementation of it to support special handling required by that
- * database.
- *
- * @see http://php.net/manual/en/book.pdo.php
+ * Every database driver implementation must provide a concrete implementation
+ * of this class to support special handling for the RDF store in use.
  */
 abstract class RdfdbConnection {
 
@@ -67,11 +63,11 @@ abstract class RdfdbConnection {
   //protected $statementClass = 'DatabaseStatementBase';
 
   /**
-   * An index used to generate unique temporary names.
+   * An index used to generate unique temporary graphs.
    *
    * @var integer
    */
-  protected $temporaryNameIndex = 0;
+  protected $temporaryGraphIndex = 0;
 
   /**
    * An object representing the remote store.
@@ -205,18 +201,11 @@ abstract class RdfdbConnection {
    * Executes a query string against the database.
    *
    * This method provides a central handler for the actual execution of every
-   * query. All queries executed by Drupal are executed as PDO prepared
-   * statements.
+   * query.
    *
    * @param $query
    *   The query to execute. In most cases this will be a string containing
-   *   an SQL query with placeholders. An already-prepared instance of
-   *   DatabaseStatementInterface may also be passed in order to allow calling
-   *   code to manually bind variables to a query. If a
-   *   DatabaseStatementInterface is passed, the $args array will be ignored.
-   *   It is extremely rare that module code will need to pass a statement
-   *   object to this method. It is used primarily for database drivers for
-   *   databases that require special LOB field handling.
+   *   a SPARQL query with placeholders.
    * @param $args
    *   An array of arguments for the prepared statement. If the prepared
    *   statement uses ? placeholders, this array must be an indexed array.
@@ -360,104 +349,23 @@ abstract class RdfdbConnection {
   }
 
   /**
-   * Prepares and returns an UPDATE query object with the specified ID.
-   *
-   * @param $options
-   *   An array of options on the query.
-   *
-   * @return UpdateQuery
-   *   A new UpdateQuery object.
-   *
-   * @see UpdateQuery
-   */
-  public function update($table, array $options = array()) {
-    $class = $this->getDriverClass('UpdateQuery');
-    return new $class($this, $table, $options);
-  }
-
-  /**
-   * Prepares and returns a DELETE query object with the specified ID.
-   *
-   * @param $options
-   *   An array of options on the query.
-   *
-   * @return DeleteQuery
-   *   A new DeleteQuery object.
-   *
-   * @see DeleteQuery
-   */
-  public function delete($table, array $options = array()) {
-    $class = $this->getDriverClass('DeleteQuery');
-    return new $class($this, $table, $options);
-  }
-
-  /**
-   * Returns a DatabaseSchema object for manipulating the schema.
-   *
-   * This method will lazy-load the appropriate schema library file.
-   *
-   * @return DatabaseSchema
-   *   The DatabaseSchema object for this connection.
-   */
-  public function schema() {
-    if (empty($this->schema)) {
-      $class = $this->getDriverClass('DatabaseSchema');
-      if (class_exists($class)) {
-        $this->schema = new $class($this);
-      }
-    }
-    return $this->schema;
-  }
-
-  /**
-   * Runs a limited-range query on this database object.
-   *
-   * Use this as a substitute for ->query() when a subset of the query is to be
-   * returned. User-supplied arguments to the query should be passed in as
-   * separate parameters so that they can be properly escaped to avoid SQL
-   * injection attacks.
-   *
-   * @param $query
-   *   A string containing an SQL query.
-   * @param $args
-   *   An array of values to substitute into the query at placeholder markers.
-   * @param $from
-   *   The first result row to return.
-   * @param $count
-   *   The maximum number of result rows to return.
-   * @param $options
-   *   An array of options on the query.
-   *
-   * @return DatabaseStatementInterface
-   *   A database query result resource, or NULL if the query was not executed
-   *   correctly.
-   */
-  abstract public function queryRange($query, $from, $count, array $args = array(), array $options = array());
-
-  /**
    * Generates a temporary table name.
    *
    * @return
    *   A table name.
    */
-  protected function generateTemporaryTableName() {
-    return "db_temporary_" . $this->temporaryNameIndex++;
+  protected function generateTemporaryGraphName() {
+    return "graph_temporary_" . $this->temporaryGraphIndex++;
   }
 
   /**
-   * Runs a SELECT query and stores its results in a temporary table.
+   * Runs a query and stores its results in a temporary table.
    *
    * Use this as a substitute for ->query() when the results need to stored
-   * in a temporary table. Temporary tables exist for the duration of the page
-   * request. User-supplied arguments to the query should be passed in as
-   * separate parameters so that they can be properly escaped to avoid SQL
-   * injection attacks.
-   *
-   * Note that if you need to know how many results were returned, you should do
-   * a SELECT COUNT(*) on the temporary table afterwards.
+   * in a temporary graph.
    *
    * @param $query
-   *   A string containing a normal SELECT SQL query.
+   *   A string containing a normal SPARQL query.
    * @param $args
    *   An array of values to substitute into the query at placeholder markers.
    * @param $options
@@ -465,7 +373,7 @@ abstract class RdfdbConnection {
    *   the documentation for RdfdbConnection::defaultOptions() for details.
    *
    * @return
-   *   The name of the temporary table.
+   *   The name of the temporary graph.
    */
   abstract function queryTemporary($query, array $args = array(), array $options = array());
 
@@ -526,7 +434,7 @@ abstract class Rdfdb {
   static protected $connections = array();
 
   /**
-   * A processed copy of the database connection information from settings.php.
+   * A processed copy of the database connection information.
    *
    * @var array
    */
@@ -893,19 +801,6 @@ abstract class Rdfdb {
 }
 
 /**
- * Exception thrown if an insert query specifies a field twice.
- *
- * It is not allowed to specify a field as default and insert field, this
- * exception is thrown if that is the case.
- */
-class FieldsOverlapException extends Exception {}
-
-/**
- * Exception thrown if an insert query doesn't specify insert or default fields.
- */
-class NoFieldsException extends Exception {}
-
-/**
  * Exception thrown if an undefined database connection is requested.
  */
 class RdfdbConnectionNotDefinedException extends Exception {}
@@ -923,109 +818,15 @@ class DatabaseDriverNotSpecifiedException extends Exception {}
  */
 
 /**
- * Executes an arbitrary query string against the active database.
- *
- * Do not use this function for INSERT, UPDATE, or DELETE queries. Those should
- * be handled via the appropriate query builder factory. Use this function for
- * SELECT queries that do not require a query builder.
- *
- * @param $query
- *   The prepared statement query to run. Although it will accept both named and
- *   unnamed placeholders, named placeholders are strongly preferred as they are
- *   more self-documenting.
- * @param $args
- *   An array of values to substitute into the query. If the query uses named
- *   placeholders, this is an associative array in any order. If the query uses
- *   unnamed placeholders (?), this is an indexed array and the order must match
- *   the order of placeholders in the query string.
- * @param $options
- *   An array of options to control how the query operates.
- *
- * @return DatabaseStatementInterface
- *   A prepared statement object, already executed.
- *
- * @see RdfdbConnection::defaultOptions()
- */
-function db_query($query, array $args = array(), array $options = array()) {
-  if (empty($options['target'])) {
-    $options['target'] = 'default';
-  }
-
-  return Rdfdb::getConnection($options['target'])->query($query, $args, $options);
-}
-
-/**
- * Executes a query against the active database, restricted to a range.
- *
- * @param $query
- *   The prepared statement query to run. Although it will accept both named and
- *   unnamed placeholders, named placeholders are strongly preferred as they are
- *   more self-documenting.
- * @param $from
- *   The first record from the result set to return.
- * @param $count
- *   The number of records to return from the result set.
- * @param $args
- *   An array of values to substitute into the query. If the query uses named
- *   placeholders, this is an associative array in any order. If the query uses
- *   unnamed placeholders (?), this is an indexed array and the order must match
- *   the order of placeholders in the query string.
- * @param $options
- *   An array of options to control how the query operates.
- *
- * @return DatabaseStatementInterface
- *   A prepared statement object, already executed.
- *
- * @see RdfdbConnection::defaultOptions()
- */
-function db_query_range($query, $from, $count, array $args = array(), array $options = array()) {
-  if (empty($options['target'])) {
-    $options['target'] = 'default';
-  }
-
-  return Rdfdb::getConnection($options['target'])->queryRange($query, $from, $count, $args, $options);
-}
-
-/**
- * Executes a query string and saves the result set to a temporary table.
- *
- * The execution of the query string happens against the active database.
- *
- * @param $query
- *   The prepared statement query to run. Although it will accept both named and
- *   unnamed placeholders, named placeholders are strongly preferred as they are
- *   more self-documenting.
- * @param $args
- *   An array of values to substitute into the query. If the query uses named
- *   placeholders, this is an associative array in any order. If the query uses
- *   unnamed placeholders (?), this is an indexed array and the order must match
- *   the order of placeholders in the query string.
- * @param $options
- *   An array of options to control how the query operates.
- *
- * @return
- *   The name of the temporary table.
- *
- * @see RdfdbConnection::defaultOptions()
- */
-function db_query_temporary($query, array $args = array(), array $options = array()) {
-  if (empty($options['target'])) {
-    $options['target'] = 'default';
-  }
-
-  return Rdfdb::getConnection($options['target'])->queryTemporary($query, $args, $options);
-}
-
-/**
  * Returns a new SelectQuery object for the active database.
  *
  * @param $vars
- *   The variables of the SPARQL query as a string. @todo array
+ *   The variables of the SPARQL query as a string.
  * @param $options
  *   An array of options to control how the query operates.
  *
- * @return InsertQuery
- *   A new InsertQuery object for this connection.
+ * @return RdfdbSelectQuery
+ *   A new RdfdbSelectQuery object for this connection.
  */
 function rdfdb_select($vars, array $options = array()) {
   if (empty($options['target'])) {
@@ -1046,8 +847,8 @@ function rdfdb_select($vars, array $options = array()) {
  * @param $options
  *   An array of options to control how the query operates.
  *
- * @return InsertQuery
- *   A new InsertQuery object for this connection.
+ * @return RdfdbInsertDataQuery
+ *   A new RdfdbInsertDataQuery object for this connection.
  */
 function rdfdb_insert_data($graph = NULL, $triples, array $options = array()) {
   if (empty($options['target']) || $options['target'] == 'slave') {
@@ -1067,8 +868,8 @@ function rdfdb_insert_data($graph = NULL, $triples, array $options = array()) {
  * @param $options
  *   An array of options to control how the query operates.
  *
- * @return DeleteQuery
- *   A new DeleteQuery object for this connection.
+ * @return RdfdbDeleteDataQuery
+ *   A new RdfdbDeleteDataQuery object for this connection.
  */
 function rdfdb_delete_data($graph = NULL, $triples, array $options = array()) {
   if (empty($options['target']) || $options['target'] == 'slave') {
@@ -1141,9 +942,6 @@ function rdfdb_ignore_slave() {
   // Only set ignore_slave_server if there are slave servers being used, which
   // is assumed if there are more than one.
   if (count($connection_info) > 1) {
-    // Five minutes is long enough to allow the slave to break and resume
-    // interrupted replication without causing problems on the Drupal site from
-    // the old data.
     $duration = variable_get('maximum_replication_lag', 300);
     // Set session variable with amount of time to delay before using slave.
     $_SESSION['ignore_slave_server'] = REQUEST_TIME + $duration;
