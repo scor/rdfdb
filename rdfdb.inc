@@ -359,25 +359,6 @@ abstract class RdfdbConnection {
   }
 
   /**
-   * Runs a query and stores its results in a temporary table.
-   *
-   * Use this as a substitute for ->query() when the results need to stored
-   * in a temporary graph.
-   *
-   * @param $query
-   *   A string containing a normal SPARQL query.
-   * @param $args
-   *   An array of values to substitute into the query at placeholder markers.
-   * @param $options
-   *   An associative array of options to control how the query is run. See
-   *   the documentation for RdfdbConnection::defaultOptions() for details.
-   *
-   * @return
-   *   The name of the temporary graph.
-   */
-  abstract function queryTemporary($query, array $args = array(), array $options = array());
-
-  /**
    * Returns the type of database driver.
    *
    * This is not necessarily the same as the type of the database itself. For

@@ -1,13 +1,9 @@
 <?php
 
-/**
- * @file
- * RDFDB interface code for ARC2 servers.
- */
 
 /**
- * @ingroup database
- * @{
+ * @file
+ * Code for connection to ARC2 servers.
  */
 
 class RdfdbConnection_arc2 extends RdfdbConnection {
@@ -39,16 +35,6 @@ class RdfdbConnection_arc2 extends RdfdbConnection {
     }
   }
 
-  public function queryRange($query, $from, $count, array $args = array(), array $options = array()) {
-    return $this->query($query . ' LIMIT ' . $from . ', ' . $count, $args, $options);
-  }
-
-  public function queryTemporary($query, array $args = array(), array $options = array()) {
-    $tablename = $this->generateTemporaryTableName();
-    $this->query(preg_replace('/^SELECT/i', 'CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY SELECT', $query), $args, $options);
-    return $tablename;
-  }
-
   public function driver() {
     return 'arc2';
   }
@@ -58,8 +44,3 @@ class RdfdbConnection_arc2 extends RdfdbConnection {
   }
 
 }
-
-
-/**
- * @} End of "ingroup database".
- */

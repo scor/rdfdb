@@ -27,24 +27,13 @@ class RdfdbInsertDataQuery_arc2 extends RdfdbInsertDataQuery {
     // Serializes prefixes in prologue if they are given. Otherwise ARC2 will
     // use the prefixes which were defined during the remote endpoint setup.
     $prologue = $this->preparePrefixes();
-    //return 'SELECT * WHERE {  GRAPH ?g { ?s ?p ?o . } } LIMIT 10';
     if (!empty($this->graph)) {
-      // ARC2 requires a graph no matter what.
       return $prologue . 'INSERT INTO <' . $this->graph . '> { ' . $this->triples . ' }';
     }
     else {
+      // ARC2 requires a graph for insertion no matter what.
       return $prologue . 'INSERT INTO <http://example.org/default_graph> { ' . $this->triples . ' }';
     }
-  }
-
-  /**
-   * Generic preparation and validation for an INSERT query.
-   *
-   * @return
-   *   TRUE if the validation was successful, FALSE if not.
-   */
-  public function preExecute() {
-    return TRUE;
   }
 }
 
@@ -71,23 +60,12 @@ class RdfdbDeleteDataQuery_arc2 extends RdfdbDeleteDataQuery {
     // Serializes prefixes in prologue if they are given. Otherwise ARC2 will
     // use the prefixes which were defined during the remote endpoint setup.
     $prologue = $this->preparePrefixes();
-    //return 'SELECT * WHERE {  GRAPH ?g { ?s ?p ?o . } } LIMIT 10';
     if (!empty($this->graph)) {
       return $prologue . 'DELETE FROM <' . $this->graph . '> { ' . $this->triples . ' }';
     }
     else {
       return $prologue . 'DELETE { ' . $this->triples . ' }';
     }
-  }
-
-  /**
-   * Generic preparation and validation for an INSERT query.
-   *
-   * @return
-   *   TRUE if the validation was successful, FALSE if not.
-   */
-  public function preExecute() {
-    return TRUE;
   }
 }
 
@@ -103,7 +81,7 @@ class RdfdbClearQuery_arc2 extends RdfdbClearQuery {
     }
 
     // The zombie bug in ARC2 causes the triples to reappear after attempting
-    // to clear the whole store with DELETE { ?s ?p ?o . } WHERE { ?s ?p ?o . }
+    // to delete them. Deletes the graphs one by one as a work around.
     if (empty($this->graph)) {
       $rs = rdfdb_select('DISTINCT ?g')->where('GRAPH ?g { ?s ?p ?o . } ')->execute();
       foreach ($rs['result']['rows'] as $row) {
