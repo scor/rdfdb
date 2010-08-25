@@ -292,15 +292,27 @@ abstract class RdfdbConnection {
   }
 
   /**
+   * Prepares and returns a query object.
+   *
+   * @param $options
+   *   An array of options on the query.
+   *
+   * @return SelectCustomQuery
+   *   A new SelectCustomQuery object.
+   */
+  public function selectCustom($vars, array $options = array()) {
+    $class = $this->getDriverClass('RdfdbSelectCustomQuery');
+    return new $class($this, $vars, $options);
+  }
+
+  /**
    * Prepares and returns a SELECT query object.
    *
    * @param $options
    *   An array of options on the query.
    *
-   * @return InsertQuery
-   *   A new InsertQuery object.
-   *
-   * @see InsertQuery
+   * @return SelectQuery
+   *   A new SelectQuery object.
    */
   public function select($vars, array $options = array()) {
     $class = $this->getDriverClass('RdfdbSelectQuery');
@@ -315,8 +327,6 @@ abstract class RdfdbConnection {
    *
    * @return InsertQuery
    *   A new InsertQuery object.
-   *
-   * @see InsertQuery
    */
   public function insertData($graph, $triples, array $options = array()) {
     $class = $this->getDriverClass('RdfdbInsertDataQuery');
@@ -331,8 +341,6 @@ abstract class RdfdbConnection {
    *
    * @return DeleteQuery
    *   A new DeleteQuery object.
-   *
-   * @see DeleteQuery
    */
   public function deleteData($graph, $triples, array $options = array()) {
     $class = $this->getDriverClass('RdfdbDeleteDataQuery');
@@ -341,7 +349,6 @@ abstract class RdfdbConnection {
 
   /**
    * Prepares and returns a CLEAR query object.
-   *
    */
   public function clear($graph, array $options = array()) {
     $class = $this->getDriverClass('RdfdbClearQuery');
@@ -352,7 +359,7 @@ abstract class RdfdbConnection {
    * Generates a temporary table name.
    *
    * @return
-   *   A table name.
+   *   A graph name.
    */
   protected function generateTemporaryGraphName() {
     return "graph_temporary_" . $this->temporaryGraphIndex++;
@@ -515,11 +522,15 @@ abstract class Rdfdb {
    *   The database target name.
    * @param $key
    *   The database connection key. Defaults to NULL which means the active key.
+   * @param $type
+   *   The database connection type. Some driver implementation might need to
+   *   use a custom HTTP client in the case of updates for example. The default
+   *   uses the ARC2 RemoteStore class which works for most SELECT queries.
    *
    * @return RdfdbConnection
    *   The corresponding connection object.
    */
-  final public static function getConnection($target = 'default', $key = NULL) {
+  final public static function getConnection($target = 'default', $key = NULL, $type = 'default') {
     if (!isset($key)) {
       // By default, we want the active connection, set in setActiveConnection.
       $key = self::$activeKey;
@@ -835,7 +846,7 @@ function rdfdb_insert_data($graph = NULL, $triples, array $options = array()) {
   if (empty($options['target']) || $options['target'] == 'slave') {
     $options['target'] = 'default';
   }
-  return Rdfdb::getConnection($options['target'])->insertData($graph, $triples, $options);
+  return Rdfdb::getConnection($options['target'], NULL, 'update')->insertData($graph, $triples, $options);
 }
 
 /**
@@ -856,7 +867,7 @@ function rdfdb_delete_data($graph = NULL, $triples, array $options = array()) {
   if (empty($options['target']) || $options['target'] == 'slave') {
     $options['target'] = 'default';
   }
-  return Rdfdb::getConnection($options['target'])->deleteData($graph, $triples, $options);
+  return Rdfdb::getConnection($options['target'], NULL, 'update')->deleteData($graph, $triples, $options);
 }
 
 /**
@@ -874,7 +885,29 @@ function rdfdb_clear($graph = NULL, array $options = array()) {
   if (empty($options['target']) || $options['target'] == 'slave') {
     $options['target'] = 'default';
   }
-  return Rdfdb::getConnection($options['target'])->Clear($graph, $options);
+  return Rdfdb::getConnection($options['target'], NULL, 'update')->Clear($graph, $options);
+}
+
+/**
+ * Returns a new SelectCustomQuery object for the active database.
+ *
+ * This function should only be used for SELECT, CONSTRUCT, ASK or DESCRIBE
+ * queries. The query will be sent as is to the SPARQL endpoint.
+ *
+ * @param $query
+ *   The SPARQL query.
+ * @param $options
+ *   An array of options to control how the query operates.
+ *
+ * @return SelectCustomQuery
+ *   A new SelectCustomQuery object for this connection.
+ */
+function rdfdb_query($query, array $options = array()) {
+  if (empty($options['target'])) {
+    $options['target'] = 'default';
+  }
+  //var_dump($options);
+  return Rdfdb::getConnection($options['target'])->selectCustom($query, $options);
 }
 
 

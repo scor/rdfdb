@@ -168,6 +168,54 @@ abstract class RdfdbQuery implements RdfdbQueryAlterableInterface {
 }
 
 /**
+ * General class for a raw SPARQL query.
+ */
+class RdfdbSelectCustomQuery extends RdfdbQuery {
+
+  /**
+   * The SPARQL query.
+   *
+   * @query string
+   */
+  protected $query;
+
+  public function __construct($connection, $query, array $options = array()) {
+    parent::__construct($connection, $options);
+    //var_dump($this);
+    $this->query = $query;
+  }
+
+  /**
+   * Executes the select query.
+   */
+  public function execute() {
+    // If validation fails, simply return NULL.
+    // Note that validation routines in preExecute() may throw exceptions instead.
+    if (!$this->preExecute()) {
+      return NULL;
+    }
+
+    $query = $this->toString();
+    //var_dump($query);
+    return $this->connection->query($query, $this->queryOptions);
+  }
+
+  public function toString() {
+    return $this->query;
+  }
+
+  public function preparePrefixes() {
+    $prefixes = '';
+    if (!empty($this->queryOptions['namespaces'])) {
+      foreach ($this->queryOptions['namespaces'] as $p => $ns) {
+        $prefixes .= 'PREFIX ' . $p . ': <' . $ns . ">\n";
+      }
+    }
+    return $prefixes;
+  }
+}
+
+/**
  * General class for an abstracted SELECT query.
  */
 class RdfdbSelectQuery extends RdfdbQuery {
