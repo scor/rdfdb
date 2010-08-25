@@ -20,7 +20,7 @@ class RdfdbInsertDataQuery_virtuoso extends RdfdbInsertDataQuery {
     }
 
     $query = $this->toString();
-    return $this->connection->query($query, $this->queryOptions);
+    return $this->connection->update_query($query, $this->queryOptions);
   }
 
   public function toString() {
@@ -64,7 +64,7 @@ class RdfdbDeleteDataQuery_virtuoso extends RdfdbDeleteDataQuery {
 
     $query = $this->toString();
     //var_dump($query);
-    return $this->connection->query($query, $this->queryOptions);
+    return $this->connection->update_query($query, $this->queryOptions);
   }
 
   public function toString() {
@@ -114,7 +114,7 @@ class RdfdbClearQuery_virtuoso extends RdfdbClearQuery {
 
     $query = $this->toString();
     //var_dump($query);
-    return $this->connection->query($query, $this->queryOptions);
+    return $this->connection->update_query($query, $this->queryOptions);
   }
 
 
@@ -127,7 +127,7 @@ class RdfdbClearQuery_virtuoso extends RdfdbClearQuery {
       return $prologue . ' CLEAR GRAPH <' . $this->graph . '>';
     }
     else {
-      throw new Exception('The default graph must be provided');
+      throw new Exception('The graph to clear must be provided');
     }
   }
 }

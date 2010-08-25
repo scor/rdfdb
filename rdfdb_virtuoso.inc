@@ -55,17 +55,33 @@ class RdfdbConnection_virtuoso extends RdfdbConnection {
     if (!empty($rdfdb_info['default']['namespaces'])) {
       $config['ns'] = $rdfdb_info['default']['namespaces'];
     }
-    $this->store = new ARC2_RemoteStore_Rdfdb($config, $this);
+    $this->store = new ARC2_RemoteStore($config, $this);
+
+    // Special connection for updates.
+    $this->store_update = new ARC2_RemoteStore_Rdfdb($config, $this);
   }
 
   public function query($query, array $options = array()) {
+    $r = $this->store->query($query, $options);
+//    var_dump($query);
+    if ($e = $this->store->getErrors()) {
+      throw new PDOException('Invalid return directive: ' . implode($e));
+    }
+    else {
+      //var_dump($r);
+      return $r;
+    }
+  }
+
+  // @todo push this into the connection class.
+  public function update_query($query, array $options = array()) {
     $rdfdb_info = Rdfdb::getConnectionInfo();
 
     $config = array(
       'remote_store_endpoint' => $rdfdb_info['default']['endpoint'],
       'store_write_key' => $rdfdb_info['default']['apikey'],
     );
-    var_dump($query);
+    //var_dump($query);
     //$query = 'INSERT DATA INTO GRAPH <http://mygraph.com> {<http://example.com/person/1234#person> <http://xmlns.com/foaf/0.1/name> "John Doe" .}';
     $data = array(
       //'graph' => 'http://example.org/g1',
@@ -76,36 +92,14 @@ class RdfdbConnection_virtuoso extends RdfdbConnection {
     foreach($data as $k => $v) {
       $s .= '&' . $k . '=' . urlencode($v);
     }
-    
+
     $http_options = array(
       'headers' => array('Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8'),
       'method' => 'POST',
       'data' => $s,
     );
+
     return http_request($rdfdb_info['default']['endpoint'], $http_options);
-
-    return;
-    
-    $r = $this->store->query($query, $options);
-    if ($e = $this->store->getErrors()) {
-      //var_dump($this);
-      //var_dump($e);
-      throw new PDOException('Invalid return directive: ' . implode($e));
-    }
-    else {
-      //var_dump($r);
-      return $r;
-    }
-  }
-
-  public function queryRange($query, $from, $count, array $args = array(), array $options = array()) {
-    return $this->query($query . ' LIMIT ' . $from . ', ' . $count, $args, $options);
-  }
-
-  public function queryTemporary($query, array $args = array(), array $options = array()) {
-    $tablename = $this->generateTemporaryTableName();
-    $this->query(preg_replace('/^SELECT/i', 'CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY SELECT', $query), $args, $options);
-    return $tablename;
   }
 
   public function driver() {
