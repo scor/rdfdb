@@ -36,7 +36,7 @@ http://example/testClearGraph2	http://example/book2	http://ex.org/title	Fundamen
     $sorted_rs = implode("\n", $sorted_rs);
     $this->assertEqual($sorted_rs, $expected_tsv, 'The data has been inserted in the store [%s]');
 
-    // Clear one of the graphs ans check the content of the store.
+    // Clear one of the graphs and check the content of the store.
     rdfdb_clear('http://example/testClearGraph1')->execute();
     $expected_tsv = '
 http://example/testClearGraph2	http://example/book2	http://ex.org/author	Bob
@@ -125,7 +125,7 @@ http://example/testClearGraph2	http://example/book2	http://ex.org/title	Fundamen
   }
 
   /**
-   * Helper functio to clear a store during tests.
+   * Helper functions to clear an entire store during tests.
    */
   function _clear($options = array()) {
     rdfdb_clear()->execute();

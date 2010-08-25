@@ -105,7 +105,7 @@ class RdfdbClearQuery_arc2 extends RdfdbClearQuery {
       return $prologue . ' DELETE FROM <' . $this->graph . '> { ?s ?p ?o . } WHERE { ?s ?p ?o . }';
     }
     else {
-      // @todo this is not reliable and will be overridden until the zombie bug
+      // This is not reliable and will be overridden until the zombie bug
       // has been fixed in ARC2.
       // @see $this->execute()
       return $prologue . ' DELETE { ?s ?p ?o . } WHERE { ?s ?p ?o . }';
