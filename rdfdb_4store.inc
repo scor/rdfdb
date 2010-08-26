@@ -48,7 +48,6 @@ class RdfdbConnection_4store extends RdfdbConnection {
   public function __construct(array $connection_options = array()) {
     // Gets connection info and instanciate an ARC2 remote SPARQL store.
     $rdfdb_info = Rdfdb::getConnectionInfo();
-
     $config = array(
       'remote_store_endpoint' => $rdfdb_info['default']['endpoint'],
       'store_write_key' => $rdfdb_info['default']['apikey'],
@@ -56,56 +55,61 @@ class RdfdbConnection_4store extends RdfdbConnection {
     if (!empty($rdfdb_info['default']['namespaces'])) {
       $config['ns'] = $rdfdb_info['default']['namespaces'];
     }
-    $this->store = new ARC2_RemoteStore_Rdfdb($config, $this);
+    $this->store = new ARC2_RemoteStore($config, $this);
+//    $this->store = new ARC2_RemoteStore_Rdfdb($config, $this);
   }
 
   public function query($query, array $options = array()) {
-    $rdfdb_info = Rdfdb::getConnectionInfo();
+    $r = $this->store->query($query, $options);
+    if ($e = $this->store->getErrors()) {
+      throw new PDOException('Invalid return directive: ' . implode($e));
+    }
+    else {
+      return $r;
+    }
+  }
 
+  public function query_insert($query, array $options = array()) {
+    $rdfdb_info = Rdfdb::getConnectionInfo();
+    // 4store RESTful API accepts data at the /data/ endpoint.
+    $data_endpoint = substr_replace($rdfdb_info['default']['endpoint'], 'data', -7, -1);
     $config = array(
-      'remote_store_endpoint' => $rdfdb_info['default']['endpoint'],
+      'remote_store_endpoint' => $data_endpoint,
       'store_write_key' => $rdfdb_info['default']['apikey'],
     );
-    $data = '<http://example.com/person/1234#person> <http://xmlns.com/foaf/0.1/name> "John Doe" .';
+    // In this case the query is just the triples to be inserted.
     $data = array(
-      'graph' => 'http://example.org/g1',
-      'data' => $data,
+      'graph' => $options['graph'],
+      'data' => $query,
       'mime-type' => 'application/x-turtle',
     );
     $s = '';
     foreach($data as $k => $v) {
       $s .= $k . '=' . urlencode($v) . '&';
     }
-    
+
     $http_options = array(
       'headers' => array('Content-Type' => 'application/x-www-form-urlencoded; charset=utf-8'),
       'method' => 'POST',
       'data' => $s,
     );
-    return http_request($rdfdb_info['default']['endpoint'], $http_options);
-
-    return;
-    
-    $r = $this->store->query($query, $options);
-    if ($e = $this->store->getErrors()) {
-      var_dump($this);
-      //var_dump($e);
-      throw new PDOException('Invalid return directive: ' . implode($e));
-    }
-    else {
-      //var_dump($r);
-      return $r;
-    }
+    return http_request($data_endpoint, $http_options);
   }
 
-  public function queryRange($query, $from, $count, array $args = array(), array $options = array()) {
-    return $this->query($query . ' LIMIT ' . $from . ', ' . $count, $args, $options);
-  }
-
-  public function queryTemporary($query, array $args = array(), array $options = array()) {
-    $tablename = $this->generateTemporaryTableName();
-    $this->query(preg_replace('/^SELECT/i', 'CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY SELECT', $query), $args, $options);
-    return $tablename;
+  public function query_clear($query, array $options = array()) {
+    $rdfdb_info = Rdfdb::getConnectionInfo();
+    // 4store RESTful API accepts data at the /data/ endpoint.
+    $data_endpoint = substr_replace($rdfdb_info['default']['endpoint'], 'data', -7, -1);
+    $config = array(
+      'remote_store_endpoint' => $data_endpoint,
+      'store_write_key' => $rdfdb_info['default']['apikey'],
+    );
+    // In this case the query is the graph to be deleted.
+    $graph = $query;
+    $http_options = array(
+      'method' => 'DELETE',
+    );
+    return http_request($rdfdb_info['default']['endpoint'] . $graph, $http_options);
   }
 
   public function driver() {
