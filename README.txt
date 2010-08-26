@@ -1,16 +1,11 @@
-The PHP SPARQL Objects (PSO) library defines a lightweight, consistent interface for accessing RDF stores in PHP using the SPARQL query and update language. Each SPARQL endpoint driver that implements the PSO interface can expose store-specific features as regular extension functions. Note that in order to use this interface you must use a store-specific PSO driver to access a SPARQL endpoint. PSO provides a data-access abstraction layer, which means that, regardless of which store you're using, you use the same functions to issue queries and fetch data.
+The RDF Database (RDFDB) library defines a lightweight, consistent interface for accessing RDF stores in PHP using the SPARQL query and update language. Each RDF store driver that implements the RDFDB interface can expose store-specific features as regular extension functions. Note that in order to use this interface you must use a store-specific RDFDB driver to access a SPARQL endpoint. RDFDB provides a data-access abstraction layer, which means that, regardless of which store you're using, you use the same functions to issue queries.
 
 The XXX Database API provides a standard, vendor-agnostic abstraction layer for accessing RDF stores. The API is designed to preserve the syntax and power of SPARQL 1.1 as much as possible, but also:
 
-    * to support multiple database servers easily;
+    * to support multiple RDF database servers easily;
     * to provide a structured interface for the dynamic construction of queries;
     * to enforce security checks and other good practices;
-    * to provide modules with a clean interface for intercepting and modifying a site's queries. 
-
-
-PSI: PHP SPARQL Interface
-
-unified, object-oriented API for accessing different RDF stores via SPARQL.
+    * to provide modules with a clean interface for intercepting and modifying a site's queries.
 
 
 == Drivers ==
