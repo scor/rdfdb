@@ -22,18 +22,16 @@ A query is an SPARQL statement that will be sent to a database connection. Queri
 
 == Connection key ==
 
-A connection key is a unique identifier for a given RDF database connection. The connection key must be unique for a given site, and there must always be a connection of "default" that will be the primary Drupal database. Note that at the moment, we do not yet make use of the target key, so it should be left as default for now. Each driver may have different configuration depending on what is appropriate for it.
+A connection key is a unique identifier for a given RDF database connection. The connection key must be unique for a given site, and there must always be a connection of "default" that will be the primary database. Note that at the moment, we do not yet make use of the target key, so it should be left as default for now. Each driver may have different configuration depending on what is appropriate for it.
 
 $databases['rdfdb1']['default'] = array(
   'driver' => 'arc2',
-  'database' => 'drupaldb1',
-  'username' => 'username',
-  'password' => 'secret',
-  'host' => 'dbserver1',
+  'endpoint' => 'http://localhost/arc2_endpoint.php',
+  'apikey' => 'somekey',
 );
 $databases['rdfdb2']['default'] = array(
   'driver' => '4store',
-  'file' => 'files/extradb.sqlite',
+  'endpoint' => 'http://localhost:8080/sparql/',
 );
 
 
