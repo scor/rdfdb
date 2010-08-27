@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @file
  * Code for connection to ARC2 servers.

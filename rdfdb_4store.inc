@@ -2,46 +2,8 @@
 
 /**
  * @file
- * RDFDB interface code for 4store servers.
+ * Code for connection to 4store servers.
  */
-
-ARC2::getComponent('ARC2_RemoteStore');
-
-class ARC2_RemoteStore_Rdfdb extends ARC2_RemoteStore {
-
-  function query($q, $result_format = '', $src = '', $keep_bnode_ids = 0, $log_query = 0) {
-    if ($log_query) $this->logQuery($q);
-    ARC2::inc('SPARQLPlusParser');
-    //$p = & new ARC2_SPARQLPlusParser($this->a, $this);
-    //$p->parse($q, $src);
-    //$infos = $p->getQueryInfos();
-    $infos['query']['type'] = 'insert';
-    $t1 = ARC2::mtime();
-    //if (!$errs = $p->getErrors()) {
-      $qt = $infos['query']['type'];
-      $r = array('query_type' => $qt, 'result' => $this->runQuery($q, $qt, $infos));
-    //}
-    //else {
-    //  $r = array('result' => '');
-    //}
-    $t2 = ARC2::mtime();
-    $r['query_time'] = $t2 - $t1;
-    /* query result */
-    if ($result_format == 'raw') {
-      return $r['result'];
-    }
-    if ($result_format == 'rows') {
-      return $this->v('rows', array(), $r['result']);
-    }
-    if ($result_format == 'row') {
-      if (!isset($r['result']['rows'])) return array();
-      return $r['result']['rows'] ? $r['result']['rows'][0] : array();
-    }
-    return $r;
-  }
-
-}
-
 
 class RdfdbConnection_4store extends RdfdbConnection {
 
@@ -55,8 +17,7 @@ class RdfdbConnection_4store extends RdfdbConnection {
     if (!empty($rdfdb_info['default']['namespaces'])) {
       $config['ns'] = $rdfdb_info['default']['namespaces'];
     }
-    $this->store = new ARC2_RemoteStore($config, $this);
-//    $this->store = new ARC2_RemoteStore_Rdfdb($config, $this);
+    $this->store = ARC2::getRemoteStore($config);
   }
 
   public function query($query, array $options = array()) {
@@ -69,6 +30,8 @@ class RdfdbConnection_4store extends RdfdbConnection {
     }
   }
 
+  // For update queries we need to send custom HTTP header so we cannot use
+  // ARC2 Remote Store class. @todo use ARC2 HTTP client instead of http.inc
   public function query_insert($query, array $options = array()) {
     $rdfdb_info = Rdfdb::getConnectionInfo();
     // 4store RESTful API accepts data at the /data/ endpoint.
@@ -96,6 +59,8 @@ class RdfdbConnection_4store extends RdfdbConnection {
     return http_request($data_endpoint, $http_options);
   }
 
+  // For update queries we need to send custom HTTP header so we cannot use
+  // ARC2 Remote Store class. @todo use ARC2 HTTP client instead of http.inc
   public function query_clear($query, array $options = array()) {
     $rdfdb_info = Rdfdb::getConnectionInfo();
     // 4store RESTful API accepts data at the /data/ endpoint.
