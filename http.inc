@@ -2,6 +2,8 @@
 /**
  * Perform an HTTP request.
  *
+ * Inspired from Drupal's HTTP client licensed under GPL v2.
+ *
  * This is a flexible and powerful HTTP client implementation. Correctly
  * handles GET, POST, PUT or any other HTTP requests. Handles redirects.
  *
@@ -45,8 +47,6 @@
  *       A string containing the response body that was received.
  */
 function http_request($url, array $options = array()) {
-  global $db_prefix;
-
   $result = new stdClass();
 
   // Parse the URL and make sure we can handle the schema.
@@ -63,8 +63,6 @@ function http_request($url, array $options = array()) {
     $result->code = -1002;
     return $result;
   }
-
-  //timer_start(__FUNCTION__);
 
   // Merge the default options.
   $options += array(
@@ -100,12 +98,6 @@ function http_request($url, array $options = array()) {
     $result->code = -$errno;
     $result->error = trim($errstr);
 
-    // Mark that this request failed. This will trigger a check of the web
-    // server's ability to make outgoing HTTP requests the next time that
-    // requirements checking is performed.
-    // @see system_requirements()
-//    variable_set('drupal_http_request_fails', TRUE);
-
     return $result;
   }
 
@@ -114,11 +106,6 @@ function http_request($url, array $options = array()) {
   if (isset($uri['query'])) {
     $path .= '?' . $uri['query'];
   }
-
-  // Merge the default headers.
-  $options['headers'] += array(
-//    'User-Agent' => 'Drupal (+http://drupal.org/)',
-  );
 
   // RFC 2616: "non-standard ports MUST, default ports MAY be included".
   // We don't add the standard port to prevent from breaking rewrite rules
@@ -151,14 +138,6 @@ function http_request($url, array $options = array()) {
   // Fetch response.
   $response = '';
   while (!feof($fp)) {
-    // Calculate how much time is left of the original timeout value.
-    //$timeout = $options['timeout'] - timer_read(__FUNCTION__) / 1000;
-    //if ($timeout <= 0) {
-    //  $result->code = HTTP_REQUEST_TIMEOUT;
-    //  $result->error = 'request timed out';
-    //  return $result;
-    //}
-    //stream_set_timeout($fp, floor($timeout), floor(1000000 * fmod($timeout, 1)));
     $response .= fread($fp, 1024);
   }
   fclose($fp);
@@ -244,12 +223,7 @@ function http_request($url, array $options = array()) {
     case 302: // Moved temporarily
     case 307: // Moved temporarily
       $location = $result->headers['Location'];
-      $options['timeout'] -= timer_read(__FUNCTION__) / 1000;
-      if ($options['timeout'] <= 0) {
-        $result->code = HTTP_REQUEST_TIMEOUT;
-        $result->error = 'request timed out';
-      }
-      elseif ($options['max_redirects']) {
+      if ($options['max_redirects']) {
         // Redirect to the new location.
         $options['max_redirects']--;
         $result = http_request($location, $options);
