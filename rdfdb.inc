@@ -734,7 +734,7 @@ abstract class Rdfdb {
     }
 
     if (!$driver = self::$databaseInfo[$key][$target]['driver']) {
-      throw new DatabaseDriverNotSpecifiedException('Driver not specified for this database connection: ' . $key);
+      throw new RdfdbDriverNotSpecifiedException('Driver not specified for this database connection: ' . $key);
     }
 
     $driver_class = 'RdfdbConnection_' . $driver;
@@ -800,7 +800,7 @@ class RdfdbConnectionNotDefinedException extends Exception {}
 /**
  * Exception thrown if no driver is specified for a database connection.
  */
-class DatabaseDriverNotSpecifiedException extends Exception {}
+class RdfdbDriverNotSpecifiedException extends Exception {}
 
 
 /**
