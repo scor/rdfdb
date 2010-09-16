@@ -723,10 +723,6 @@ abstract class Rdfdb {
    *   The database target to open.
    */
   final protected static function openConnection($key, $target) {
-    if (empty(self::$databaseInfo)) {
-      self::parseConnectionInfo();
-    }
-
     // If the requested database does not exist then it is an unrecoverable
     // error.
     if (!isset(self::$databaseInfo[$key])) {
