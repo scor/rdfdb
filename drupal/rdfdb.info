@@ -1,0 +1,8 @@
+; $Id: $
+name = RDFDB
+description = Defines a lightweight, consistent interface for accessing RDF stores in PHP using the SPARQL query and update language.
+package = RDF
+dependencies[] = rdfx
+version = VERSION
+core = 7.x
+files[] = rdfdb.module

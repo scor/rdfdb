@@ -1,0 +1,17 @@
+<?php
+// $Id:  $
+
+/**
+ * @file
+ * defines a lightweight, consistent interface for accessing RDF stores in PHP
+ * using the SPARQL query and update language
+ */
+
+/**
+ * Implements hook_init().
+ */
+function rdfdb_init() {
+  require drupal_get_path('module', 'rdfdb') . '/../rdfdb.inc';
+  require drupal_get_path('module', 'rdfdb') . '/../http.inc';
+}
+
