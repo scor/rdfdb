@@ -1,4 +1,4 @@
-The RDF Database (RDFDB) library defines a lightweight, consistent interface for accessing RDF stores in PHP using the SPARQL query and update language. Each RDF store driver that implements the RDFDB interface can expose store-specific features as regular extension functions. Note that in order to use this interface you must use a store-specific RDFDB driver to access a SPARQL endpoint. RDFDB provides a data-access abstraction layer, which means that, regardless of which store you're using, you use the same functions to issue queries.
+The RDF Database (RDFDB) library defines a lightweight, consistent interface for accessing RDF stores in PHP using the SPARQL query and update language. Each RDF store driver that implements the RDFDB interface can expose store-specific features as regular extension functions. Note that in order to use this interface you must use a store-specific RDFDB driver to access a SPARQL endpoint. RDFDB provides a data-access abstraction layer, which means that, regardless of which store you're using, you use the same functions and syntax to issue SPARQL queries.
 
 The RDF Database library provides a standard, vendor-agnostic abstraction layer for accessing RDF stores. The API is designed to preserve the syntax and power of SPARQL 1.1 as much as possible, but also:
 
@@ -6,11 +6,20 @@ The RDF Database library provides a standard, vendor-agnostic abstraction layer 
     * to provide a structured interface for the dynamic construction of queries;
     * to enforce security checks and other good practices;
     * to provide developers with a clean interface for intercepting and modifying a site's queries.
+    * no cURL or Zend dependency.
+
+== Rationale ==
+
+In an ideal world, all RDF stores would implement SPARQL 1.1 once it reaches W3C recommendation status. Today, however, we are still seeing a lot of disparity among the RDF stores available to developers. Many of them are solid, reliable and scalable implementions of quads stores. It is our hope that the internal complexity of this library will decrease overtime, or even become unecessary in the coming years. Note however that even after several decades, SQL vendors still use some proprietary syntax.
+
+Examples of disparities which RDFDB takes away:
+- 4store uses different endpoints for read and update queries. Updates in 4store is done using a RESTful set of HTTP requests (PUT, DELETE, POST).
+- ARC2 uses its own SPARQL+ syntax.
 
 
 == Drivers ==
 
-Because different RDF stores require different sorts of interaction, the RDF database layer requires a driver for each database type. RDFDB currently include drivers for ARC2, Virtuoso and 4store.
+Because different RDF stores require different sorts of interaction, the RDF database layer requires a driver for each database type. RDFDB currently include drivers for ARC2, 4store and Virtuoso.
 
 == Connections ==
 
